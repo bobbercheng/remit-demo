@@ -1,0 +1,923 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Remittance API",
+    "description": "API for near real-time cross-border remittance service between India and Canada",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support",
+      "email": "support@remit-demo.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "remittance",
+      "description": "Operations related to remittance transactions"
+    },
+    {
+      "name": "exchange-rate",
+      "description": "Operations related to exchange rates"
+    }
+  ],
+  "paths": {
+    "/api/remittance": {
+      "post": {
+        "tags": ["remittance"],
+        "summary": "Create a new remittance transaction",
+        "description": "Initiates a new remittance transaction from India to Canada",
+        "operationId": "initiateRemittance",
+        "requestBody": {
+          "description": "Remittance request information",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemittanceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Remittance initiated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemittanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["remittance"],
+        "summary": "Get all remittances for a user",
+        "description": "Returns all remittance transactions for the specified user",
+        "operationId": "getUserRemittances",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "description": "ID of the user to fetch remittances for",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "remittances": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RemittanceTransaction"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/remittance/{transactionId}": {
+      "get": {
+        "tags": ["remittance"],
+        "summary": "Get remittance transaction by ID",
+        "description": "Returns a specific remittance transaction by its ID",
+        "operationId": "getRemittanceById",
+        "parameters": [
+          {
+            "name": "transactionId",
+            "in": "path",
+            "description": "ID of the transaction to fetch",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemittanceTransaction"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transaction not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["remittance"],
+        "summary": "Check and update remittance status",
+        "description": "Checks the current status of a remittance with external services and updates if needed",
+        "operationId": "checkRemittanceStatus",
+        "parameters": [
+          {
+            "name": "transactionId",
+            "in": "path",
+            "description": "ID of the transaction to check",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status checked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemittanceTransaction"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transaction not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/remittance/payment-webhook": {
+      "post": {
+        "tags": ["remittance"],
+        "summary": "Webhook for UPI payment notifications",
+        "description": "Receives notifications about UPI payment status from the payment gateway",
+        "operationId": "processPaymentWebhook",
+        "security": [
+          {
+            "webhookSignature": []
+          }
+        ],
+        "requestBody": {
+          "description": "UPI payment webhook payload",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpiWebhookPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Webhook processed successfully"
+                    },
+                    "transactionId": {
+                      "type": "string",
+                      "example": "123e4567-e89b-12d3-a456-426614174000"
+                    },
+                    "transactionStatus": {
+                      "type": "string",
+                      "example": "PAYMENT_RECEIVED"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid webhook payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/exchange-rate": {
+      "get": {
+        "tags": ["exchange-rate"],
+        "summary": "Get current exchange rate",
+        "description": "Returns the current exchange rate for INR to CAD",
+        "operationId": "getCurrentExchangeRate",
+        "parameters": [
+          {
+            "name": "sourceCurrency",
+            "in": "query",
+            "description": "Source currency code (default: INR)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["INR"],
+              "default": "INR"
+            }
+          },
+          {
+            "name": "destinationCurrency",
+            "in": "query",
+            "description": "Destination currency code (default: CAD)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["CAD"],
+              "default": "CAD"
+            }
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "description": "Rate retrieval mode (live or cached)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["live", "cached"],
+              "default": "live"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeRateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/exchange-rate/history": {
+      "get": {
+        "tags": ["exchange-rate"],
+        "summary": "Get exchange rate history",
+        "description": "Returns historical exchange rates for INR to CAD",
+        "operationId": "getExchangeRateHistory",
+        "parameters": [
+          {
+            "name": "sourceCurrency",
+            "in": "query",
+            "description": "Source currency code (default: INR)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["INR"],
+              "default": "INR"
+            }
+          },
+          {
+            "name": "destinationCurrency",
+            "in": "query",
+            "description": "Destination currency code (default: CAD)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["CAD"],
+              "default": "CAD"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of rates to return (default: 30)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 30,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sourceCurrency": {
+                      "type": "string",
+                      "example": "INR"
+                    },
+                    "destinationCurrency": {
+                      "type": "string",
+                      "example": "CAD"
+                    },
+                    "rates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "rate": {
+                            "type": "number",
+                            "format": "float",
+                            "example": 0.0162
+                          },
+                          "timestamp": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2023-11-20T08:30:00Z"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Currency": {
+        "type": "string",
+        "enum": ["INR", "CAD"],
+        "description": "Currency code (INR for Indian Rupee, CAD for Canadian Dollar)"
+      },
+      "RemittanceStatus": {
+        "type": "string",
+        "enum": [
+          "INITIATED",
+          "PAYMENT_RECEIVED",
+          "CURRENCY_CONVERTED",
+          "TRANSFER_INITIATED",
+          "COMPLETED",
+          "FAILED",
+          "CANCELLED"
+        ],
+        "description": "Status of a remittance transaction"
+      },
+      "RecipientInfo": {
+        "type": "object",
+        "required": ["fullName", "accountNumber", "bankName", "bankCode"],
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "description": "Full name of the recipient",
+            "example": "John Doe"
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "Bank account number of the recipient",
+            "example": "123456789"
+          },
+          "bankName": {
+            "type": "string",
+            "description": "Name of the recipient's bank",
+            "example": "Royal Bank of Canada"
+          },
+          "bankCode": {
+            "type": "string",
+            "description": "Bank code (transit + institution number for Canadian banks)",
+            "example": "00123-003"
+          },
+          "address": {
+            "type": "string",
+            "description": "Address of the recipient",
+            "example": "123 Maple Street, Toronto, ON M5V 2T6"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address of the recipient",
+            "example": "john.doe@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number of the recipient",
+            "example": "+1 123-456-7890"
+          }
+        }
+      },
+      "RemittanceRequest": {
+        "type": "object",
+        "required": ["userId", "sourceAmount", "sourceCurrency", "destinationCurrency", "recipient"],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "ID of the user making the remittance",
+            "example": "user-123"
+          },
+          "sourceAmount": {
+            "type": "number",
+            "format": "float",
+            "description": "Amount to send in source currency (INR)",
+            "example": 50000
+          },
+          "sourceCurrency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "destinationCurrency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/RecipientInfo"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "Purpose of the remittance",
+            "example": "Family support"
+          }
+        }
+      },
+      "RemittanceResponse": {
+        "type": "object",
+        "required": [
+          "transactionId",
+          "status",
+          "sourceAmount",
+          "sourceCurrency",
+          "destinationCurrency",
+          "fees",
+          "paymentInstructions",
+          "createdAt"
+        ],
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "Unique identifier for the transaction",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RemittanceStatus"
+          },
+          "sourceAmount": {
+            "type": "number",
+            "format": "float",
+            "description": "Amount in source currency (INR)",
+            "example": 50000
+          },
+          "sourceCurrency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "estimatedDestinationAmount": {
+            "type": "number",
+            "format": "float",
+            "description": "Estimated amount in destination currency (CAD)",
+            "example": 810
+          },
+          "destinationCurrency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "estimatedExchangeRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Estimated exchange rate",
+            "example": 0.0162
+          },
+          "fees": {
+            "type": "object",
+            "properties": {
+              "fixedFee": {
+                "type": "number",
+                "description": "Fixed fee in INR",
+                "example": 50
+              },
+              "percentageFee": {
+                "type": "number",
+                "description": "Percentage fee",
+                "example": 250
+              },
+              "totalFee": {
+                "type": "number",
+                "description": "Total fee in INR",
+                "example": 300
+              }
+            }
+          },
+          "paymentInstructions": {
+            "type": "object",
+            "properties": {
+              "upiId": {
+                "type": "string",
+                "description": "UPI ID for payment",
+                "example": "payment@upi"
+              },
+              "paymentReference": {
+                "type": "string",
+                "description": "Reference to include with payment",
+                "example": "RM-123456"
+              },
+              "amountToPay": {
+                "type": "number",
+                "format": "float",
+                "description": "Total amount to pay (including fees)",
+                "example": 50300
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the transaction was created",
+            "example": "2023-11-20T08:30:00Z"
+          }
+        }
+      },
+      "RemittanceTransaction": {
+        "type": "object",
+        "required": [
+          "transactionId",
+          "userId",
+          "status",
+          "sourceAmount",
+          "sourceCurrency",
+          "destinationCurrency",
+          "fees",
+          "recipient",
+          "paymentMethod",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "Unique identifier for the transaction",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "userId": {
+            "type": "string",
+            "description": "ID of the user who made the remittance",
+            "example": "user-123"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RemittanceStatus"
+          },
+          "sourceAmount": {
+            "type": "number",
+            "format": "float",
+            "description": "Amount in source currency (INR)",
+            "example": 50000
+          },
+          "sourceCurrency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "destinationAmount": {
+            "type": "number",
+            "format": "float",
+            "description": "Amount in destination currency (CAD)",
+            "example": 810
+          },
+          "destinationCurrency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Exchange rate used for the conversion",
+            "example": 0.0162
+          },
+          "fees": {
+            "type": "object",
+            "properties": {
+              "fixedFee": {
+                "type": "number",
+                "description": "Fixed fee in INR",
+                "example": 50
+              },
+              "percentageFee": {
+                "type": "number",
+                "description": "Percentage fee",
+                "example": 250
+              },
+              "totalFee": {
+                "type": "number",
+                "description": "Total fee in INR",
+                "example": 300
+              }
+            }
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/RecipientInfo"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "description": "Method used for payment",
+            "example": "UPI"
+          },
+          "upiReferenceId": {
+            "type": "string",
+            "description": "Reference ID from UPI payment",
+            "example": "UPI-12345"
+          },
+          "adBankReferenceId": {
+            "type": "string",
+            "description": "Reference ID from AD Bank for currency conversion",
+            "example": "ADBANK-67890"
+          },
+          "wiseReferenceId": {
+            "type": "string",
+            "description": "Reference ID from Wise for the transfer",
+            "example": "WISE-54321"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "Purpose of the remittance",
+            "example": "Family support"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the transaction was created",
+            "example": "2023-11-20T08:30:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the transaction was last updated",
+            "example": "2023-11-20T09:15:00Z"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the transaction was completed",
+            "example": "2023-11-20T10:45:00Z"
+          },
+          "failureReason": {
+            "type": "string",
+            "description": "Reason for failure if the transaction failed",
+            "example": "Payment rejected by bank"
+          }
+        }
+      },
+      "UpiWebhookPayload": {
+        "type": "object",
+        "required": [
+          "paymentReference",
+          "transactionId",
+          "status",
+          "amount",
+          "currency",
+          "upiReferenceId",
+          "timestamp"
+        ],
+        "properties": {
+          "paymentReference": {
+            "type": "string",
+            "description": "Payment reference used for the transaction",
+            "example": "RM-123456"
+          },
+          "transactionId": {
+            "type": "string",
+            "description": "ID of the remittance transaction",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["SUCCESS", "FAILURE"],
+            "description": "Status of the UPI payment"
+          },
+          "amount": {
+            "type": "number",
+            "format": "float",
+            "description": "Amount that was paid",
+            "example": 50300
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "upiReferenceId": {
+            "type": "string",
+            "description": "UPI reference ID for the payment",
+            "example": "UPI-12345"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the payment",
+            "example": "2023-11-20T08:45:00Z"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata about the payment",
+            "additionalProperties": true
+          },
+          "failureReason": {
+            "type": "string",
+            "description": "Reason for failure if the payment failed",
+            "example": "Insufficient funds"
+          }
+        }
+      },
+      "ExchangeRateResponse": {
+        "type": "object",
+        "required": ["sourceCurrency", "destinationCurrency", "rate", "timestamp"],
+        "properties": {
+          "sourceCurrency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "destinationCurrency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "rate": {
+            "type": "number",
+            "format": "float",
+            "description": "Exchange rate",
+            "example": 0.0162
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the exchange rate",
+            "example": "2023-11-20T08:30:00Z"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code",
+                "example": "VALIDATION_ERROR"
+              },
+              "message": {
+                "type": "string",
+                "description": "Error message",
+                "example": "Invalid request data"
+              },
+              "details": {
+                "type": "object",
+                "description": "Additional error details"
+              }
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "webhookSignature": {
+        "type": "apiKey",
+        "name": "x-upi-signature",
+        "in": "header",
+        "description": "HMAC-SHA256 signature for webhook verification"
+      }
+    }
+  }
+} 
