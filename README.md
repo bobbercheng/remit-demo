@@ -15,6 +15,8 @@ Use sequential-thinking, create a remittance service with java and springboot. E
 ```
 ### sequential-thing
 8 steps
+### addtinal follow up
+```JSON swagger of remittance API spec is missed, create it```
 
 
 ## Typescript version
