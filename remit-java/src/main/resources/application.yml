@@ -1,18 +1,10 @@
 spring:
-  r2dbc:
-    url: r2dbc:postgresql://localhost:5432/remitdb
-    username: postgres
-    password: postgres
-    pool:
-      initial-size: 5
-      max-size: 20
-      max-idle-time: 30m
+  application:
+    name: remit-service
   flyway:
-    url: jdbc:postgresql://localhost:5432/remitdb
-    user: postgres
-    password: postgres
-    baseline-on-migrate: true
+    enabled: true
     locations: classpath:db/migration
+    baseline-on-migrate: true
 
 server:
   port: 8080
@@ -20,143 +12,132 @@ server:
     include-message: always
     include-binding-errors: always
 
-# Application specific configurations
-remit:
-  # Integration partner configurations
-  integration:
-    # UPI Configuration for India fund collection
-    upi:
-      base-url: https://api.upi-provider.com
-      api-key: ${UPI_API_KEY:dummy-api-key}
-      callback-url: ${UPI_CALLBACK_URL:http://localhost:8080/api/v1/callbacks/upi}
-      timeout: 30s
-      
-    # AD Bank Configuration for currency conversion
-    adbank:
-      base-url: https://api.ad-bank.com
-      client-id: ${ADBANK_CLIENT_ID:dummy-client-id}
-      client-secret: ${ADBANK_CLIENT_SECRET:dummy-client-secret}
-      timeout: 45s
-      
-    # Wise Configuration for Canada fund transmission
-    wise:
-      base-url: https://api.wise.com
-      api-key: ${WISE_API_KEY:dummy-api-key}
-      profile-id: ${WISE_PROFILE_ID:dummy-profile-id}
-      webhook-url: ${WISE_WEBHOOK_URL:http://localhost:8080/api/v1/callbacks/wise}
-      timeout: 60s
-  
-  # Business rules
-  business:
-    # Minimum and maximum amounts for remittance in INR
-    min-amount-inr: 1000
-    max-amount-inr: 1000000
-    
-    # Supported countries
-    supported-source-countries:
-      - IND
-    supported-destination-countries:
-      - CAN
-      
-    # Retry configuration for external services
-    retry:
-      max-attempts: 3
-      initial-interval: 1000
-      multiplier: 2.0
-      
-# Resilience4j configuration
-resilience4j:
-  circuitbreaker:
-    instances:
-      upiService:
-        slidingWindowSize: 10
-        permittedNumberOfCallsInHalfOpenState: 5
-        waitDurationInOpenState: 30s
-        failureRateThreshold: 50
-      adbankService:
-        slidingWindowSize: 10
-        permittedNumberOfCallsInHalfOpenState: 5
-        waitDurationInOpenState: 30s
-        failureRateThreshold: 50
-      wiseService:
-        slidingWindowSize: 10
-        permittedNumberOfCallsInHalfOpenState: 5
-        waitDurationInOpenState: 30s
-        failureRateThreshold: 50
-  retry:
-    instances:
-      upiService:
-        maxAttempts: 3
-        waitDuration: 1s
-        enableExponentialBackoff: true
-        exponentialBackoffMultiplier: 2
-      adbankService:
-        maxAttempts: 3
-        waitDuration: 1s
-        enableExponentialBackoff: true
-        exponentialBackoffMultiplier: 2
-      wiseService:
-        maxAttempts: 3
-        waitDuration: 1s
-        enableExponentialBackoff: true
-        exponentialBackoffMultiplier: 2
-        
-# Logging configuration
+# API Documentation with OpenAPI
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+# Logging Configuration
 logging:
   level:
     root: INFO
-    com.fintech.remit: DEBUG
-    org.springframework.r2dbc: INFO
-    
-# Actuator endpoints for monitoring
+    com.remitservice: DEBUG
+    org.springframework.web: INFO
+    org.springframework.data.dynamodb: INFO
+
+# Integration Configurations
+integration:
+  # UPI Integration Configuration for collecting funds in India
+  upi:
+    baseUrl: https://api.upi-partner.com
+    apiKey: ${UPI_API_KEY:dummy-api-key}
+    callbackUrl: ${UPI_CALLBACK_URL:http://localhost:8080/api/v1/callbacks/upi}
+    timeoutSeconds: 30
+  
+  # AD Bank Integration for currency exchange
+  adbank:
+    baseUrl: https://api.adbank-partner.com
+    apiKey: ${ADBANK_API_KEY:dummy-api-key}
+    timeoutSeconds: 30
+  
+  # Wise Integration for cross-border disbursement
+  wise:
+    baseUrl: https://api.wise.com
+    apiKey: ${WISE_API_KEY:dummy-api-key}
+    profileId: ${WISE_PROFILE_ID:dummy-profile-id}
+    callbackUrl: ${WISE_CALLBACK_URL:http://localhost:8080/api/v1/callbacks/wise}
+    timeoutSeconds: 30
+
+# Business Rules and Configurations
+remittance:
+  # Supported currencies and limits
+  minimumAmount: 1000 # INR
+  maximumAmount: 1000000 # INR
+  # List of supported source currencies (currently only INR)
+  supportedSourceCurrencies:
+    - INR
+  # List of supported destination currencies (currently only CAD)
+  supportedDestinationCurrencies:
+    - CAD
+  # Exchange rate validity in minutes
+  exchangeRateValidity: 15
+  # Expected processing time in hours
+  processingTimeHours: 24
+  # Fee structure
+  fee:
+    percentage: 0.5
+    flat: 100 # INR
+  # Retry configuration for callbacks
+  callback:
+    retryDelaySeconds: 60
+    maxRetries: 3
+
+# AWS DynamoDB Configuration
+aws:
+  dynamodb:
+    endpoint: ${DYNAMODB_ENDPOINT:http://localhost:8000}
+    region: ${AWS_REGION:us-east-1}
+    accessKey: ${AWS_ACCESS_KEY:dummy-access-key}
+    secretKey: ${AWS_SECRET_KEY:dummy-secret-key}
+  
+# DynamoDB table names
+dynamodb:
+  table:
+    transaction: remit_transaction
+    payment: remit_payment
+    exchangeRate: remit_exchange_rate
+    disbursement: remit_disbursement
+
+# Resilience4j Configuration
+resilience4j:
+  retry:
+    instances:
+      upiClient:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+      adBankClient:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+      wiseClient:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+  circuitbreaker:
+    instances:
+      upiClient:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+      adBankClient:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+      wiseClient:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+
+# Management and Monitoring
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
   endpoint:
     health:
-      show-details: always
-      
-# Profiles specific configuration
----
-spring:
-  config:
-    activate:
-      on-profile: dev
-  flyway:
-    clean-disabled: false
-logging:
-  level:
-    com.fintech.remit: DEBUG
-    org.springframework.web: DEBUG
-    
----
-spring:
-  config:
-    activate:
-      on-profile: test
-  r2dbc:
-    url: r2dbc:tc:postgresql:///remitdb?TC_IMAGE_TAG=14-alpine
-  flyway:
-    url: jdbc:tc:postgresql:14-alpine:///remitdb
-    
----
-spring:
-  config:
-    activate:
-      on-profile: prod
-  r2dbc:
-    url: ${DATABASE_URL}
-    username: ${DATABASE_USER}
-    password: ${DATABASE_PASSWORD}
-  flyway:
-    url: ${FLYWAY_URL}
-    user: ${FLYWAY_USER}
-    password: ${FLYWAY_PASSWORD}
-server:
-  port: ${PORT:8080}
-logging:
-  level:
-    root: INFO
-    com.fintech.remit: INFO 
+      show-details: always 

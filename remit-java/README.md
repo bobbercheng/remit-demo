@@ -1,118 +1,131 @@
-# Remit - Cross-Border Remittance Service
+# Remittance Service
 
-A near real-time cross-border remittance service between India and Canada, built with Spring Boot and Reactive programming.
+A near real-time cross-border remittance service between India and Canada built with Spring Boot and reactive programming.
 
-## Features
+## Overview
 
-- User-friendly API for initiating and tracking remittances
-- Near real-time fund transfers from India to Canada
-- Secure processing with comprehensive audit trails
-- Integration with UPI for Indian fund collection
-- Integration with AD Bank for currency conversion
-- Integration with Wise for fund transmission to Canada
-- Reactive architecture for high throughput and concurrency
+This service provides a platform for users to send money from India to Canada with the following features:
 
-## Technical Architecture
+- Fund collection in India via UPI
+- Currency conversion through an AD Bank
+- Cross-border disbursement to Canadian bank accounts via Wise
+- Near real-time transaction processing
+- Comprehensive transaction tracking
 
-- Java 17
-- Spring Boot 3.x with WebFlux for reactive programming
-- PostgreSQL with R2DBC for reactive database access
-- Flyway for database migrations
-- Spring Cloud OpenFeign for API integrations
-- Resilience4j for fault tolerance
-- OpenAPI/Swagger for API documentation
+## Architecture
 
-## System Workflow
+The service follows a hexagonal architecture with reactive programming principles:
 
-1. **Initiation Phase**: User initiates remittance request
-2. **Fund Collection Phase**: Funds collected via UPI in India
-3. **Currency Conversion Phase**: INR converted to CAD via AD Bank
-4. **Transmission Phase**: Funds sent to Canada via Wise
-5. **Completion Phase**: Confirmation of successful delivery
+- **API Layer**: REST controllers with WebFlux
+- **Domain Layer**: Core business entities and logic
+- **Service Layer**: Business process orchestration
+- **Integration Layer**: External service integrations (UPI, AD Bank, Wise)
+- **Persistence Layer**: DynamoDB for data storage
 
-## Getting Started
+## Workflow
+
+1. **Transaction Initiation**:
+   - User initiates a remittance transaction
+   - System validates and creates a transaction with "INITIATED" status
+
+2. **Fund Collection**:
+   - System generates UPI payment request
+   - User completes payment
+   - System receives payment confirmation
+   - Transaction status updated to "FUNDED"
+
+3. **Currency Conversion**:
+   - System requests exchange rate from AD Bank
+   - Currency conversion is executed
+   - Transaction status updated to "CONVERTED"
+
+4. **Cross-Border Transmission**:
+   - System initiates transfer through Wise API
+   - Wise processes the cross-border transfer
+   - Transaction status updated to "PROCESSING"
+
+5. **Disbursement Confirmation**:
+   - System receives confirmation of funds deposit
+   - Transaction status updated to "COMPLETED"
+
+## Setup and Running
 
 ### Prerequisites
 
-- Java 17+
-- Maven 3.8+
-- PostgreSQL 14+
-- Docker (optional, for containerization)
+- Java 17
+- Docker and Docker Compose
 
-### Setup
+### Local Development
 
 1. Clone the repository:
    ```
-   git clone https://github.com/fintech/remit.git
-   cd remit
+   git clone https://github.com/yourusername/remit-service.git
+   cd remit-service
    ```
 
-2. Create a PostgreSQL database:
+2. Start DynamoDB Local:
    ```
-   createdb remitdb
-   ```
-
-3. Configure application properties in `src/main/resources/application.yml` or using environment variables.
-
-4. Build the application:
-   ```
-   mvn clean install
+   docker-compose up -d
    ```
 
-5. Run the application:
+3. Build the application:
    ```
-   mvn spring-boot:run
+   ./gradlew build
    ```
 
-6. Access the API documentation:
+4. Run the application:
+   ```
+   ./gradlew bootRun
+   ```
+
+5. Access the API documentation:
    ```
    http://localhost:8080/swagger-ui.html
    ```
 
-### Running with Docker
-
-```
-docker-compose up -d
-```
+6. Access DynamoDB Admin UI:
+   ```
+   http://localhost:8001
+   ```
 
 ## Configuration
 
-The application uses externalized configuration for all integration parameters and business rules. The following environment variables can be configured:
+The application is configured through `application.yml` with the following key sections:
 
-### Database Configuration
-- `DATABASE_URL`: R2DBC URL for PostgreSQL
-- `DATABASE_USER`: Database username
-- `DATABASE_PASSWORD`: Database password
-
-### UPI Configuration
-- `UPI_API_KEY`: API key for UPI integration
-- `UPI_CALLBACK_URL`: Callback URL for UPI payment notifications
-
-### AD Bank Configuration
-- `ADBANK_CLIENT_ID`: Client ID for AD Bank integration
-- `ADBANK_CLIENT_SECRET`: Client secret for AD Bank integration
-
-### Wise Configuration
-- `WISE_API_KEY`: API key for Wise integration
-- `WISE_PROFILE_ID`: Profile ID for Wise integration
-- `WISE_WEBHOOK_URL`: Webhook URL for Wise payment notifications
+- **Integration Configurations**: Settings for UPI, AD Bank, and Wise integrations
+- **Business Rules**: Transaction limits, fees, and supported currencies
+- **DynamoDB Configuration**: Database connection settings
+- **Resilience Configuration**: Retry and circuit breaker settings
 
 ## API Documentation
 
-The API is documented using OpenAPI/Swagger. When the application is running, you can access the documentation at:
+The API is documented using OpenAPI/Swagger and can be accessed at `/swagger-ui.html` when the application is running.
 
+A complete OpenAPI specification is available as a JSON file at:
 ```
-http://localhost:8080/swagger-ui.html
+src/main/resources/static/swagger/remittance-api-spec.json
 ```
+
+Key endpoints:
+
+- `POST /api/v1/transactions`: Initiate a new transaction
+- `GET /api/v1/transactions`: Get all transactions
+- `GET /api/v1/transactions/{id}`: Get a specific transaction
+- `POST /api/v1/transactions/{id}/payment`: Generate payment instructions
+- `GET /api/v1/exchange-rates`: Get current exchange rate
 
 ## Testing
 
-Run unit and integration tests:
+Run tests with:
 
 ```
-mvn test
+./gradlew test
 ```
 
 ## License
 
-MIT License 
+This project is proprietary and confidential.
+
+## Contact
+
+For questions or support, contact the Remittance Service Team at contact@remitservice.com. 

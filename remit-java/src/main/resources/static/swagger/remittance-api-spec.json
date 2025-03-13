@@ -1,0 +1,658 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Remittance Service API",
+    "description": "API for a near real-time cross-border remittance service between India and Canada",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Remittance Service Team",
+      "email": "contact@remitservice.com",
+      "url": "https://remitservice.com"
+    },
+    "license": {
+      "name": "Private License",
+      "url": "https://remitservice.com/license"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local development server"
+    },
+    {
+      "url": "https://api.remitservice.com",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Transactions",
+      "description": "API for remittance transaction operations"
+    },
+    {
+      "name": "Payments",
+      "description": "API for payment operations"
+    },
+    {
+      "name": "Exchange Rates",
+      "description": "API for currency exchange rates"
+    }
+  ],
+  "paths": {
+    "/api/v1/transactions": {
+      "post": {
+        "summary": "Initiate a new remittance transaction",
+        "operationId": "initiateTransaction",
+        "tags": ["Transactions"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Transaction initiated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      },
+      "get": {
+        "summary": "Get all transactions for the authenticated user",
+        "operationId": "getTransactions",
+        "tags": ["Transactions"],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["INITIATED", "FUNDED", "CONVERTED", "PROCESSING", "COMPLETED", "FAILED"]
+            },
+            "description": "Filter transactions by status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of transactions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransactionResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      }
+    },
+    "/api/v1/transactions/{transactionId}": {
+      "get": {
+        "summary": "Get details of a specific transaction",
+        "operationId": "getTransaction",
+        "tags": ["Transactions"],
+        "parameters": [
+          {
+            "name": "transactionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the transaction to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      }
+    },
+    "/api/v1/transactions/{transactionId}/payment": {
+      "post": {
+        "summary": "Generate payment instructions for a transaction",
+        "operationId": "generatePaymentInstructions",
+        "tags": ["Payments"],
+        "parameters": [
+          {
+            "name": "transactionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the transaction to generate payment instructions for"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment instructions generated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      }
+    },
+    "/api/v1/callbacks/upi": {
+      "post": {
+        "summary": "Handle UPI payment callback",
+        "operationId": "handleUpiCallback",
+        "tags": ["Payments"],
+        "parameters": [
+          {
+            "name": "paymentReference",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Payment reference from UPI provider"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["SUCCESS", "FAILURE", "PENDING"]
+            },
+            "description": "Status of the payment"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Callback processed successfully"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/v1/callbacks/wise": {
+      "post": {
+        "summary": "Handle Wise disbursement callback",
+        "operationId": "handleWiseCallback",
+        "tags": ["Payments"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["providerTransactionId", "status"],
+                "properties": {
+                  "providerTransactionId": {
+                    "type": "string",
+                    "description": "Transaction ID from Wise"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["COMPLETED", "FAILED", "PROCESSING"],
+                    "description": "Status of the disbursement"
+                  },
+                  "completedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when disbursement was completed"
+                  },
+                  "failureReason": {
+                    "type": "string",
+                    "description": "Reason for failure if status is FAILED"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Callback processed successfully"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/v1/exchange-rates": {
+      "get": {
+        "summary": "Get current exchange rate for a currency pair",
+        "operationId": "getExchangeRate",
+        "tags": ["Exchange Rates"],
+        "parameters": [
+          {
+            "name": "sourceCurrency",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Source currency code (e.g., INR)"
+          },
+          {
+            "name": "destinationCurrency",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Destination currency code (e.g., CAD)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current exchange rate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeRateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TransactionRequest": {
+        "type": "object",
+        "required": [
+          "sourceAmount",
+          "sourceCurrency",
+          "destinationCurrency",
+          "recipientDetails"
+        ],
+        "properties": {
+          "sourceAmount": {
+            "type": "number",
+            "format": "double",
+            "description": "Amount in source currency (INR)",
+            "minimum": 1000,
+            "maximum": 1000000
+          },
+          "sourceCurrency": {
+            "type": "string",
+            "default": "INR",
+            "description": "Source currency code",
+            "enum": ["INR"]
+          },
+          "destinationCurrency": {
+            "type": "string",
+            "default": "CAD",
+            "description": "Destination currency code",
+            "enum": ["CAD"]
+          },
+          "recipientDetails": {
+            "$ref": "#/components/schemas/RecipientDetails"
+          }
+        }
+      },
+      "RecipientDetails": {
+        "type": "object",
+        "required": [
+          "name",
+          "accountNumber",
+          "bankCode"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Recipient's full name"
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "Recipient's bank account number"
+          },
+          "bankCode": {
+            "type": "string",
+            "description": "Recipient's bank code (routing number in Canada)"
+          },
+          "bankName": {
+            "type": "string",
+            "description": "Recipient's bank name"
+          },
+          "address": {
+            "type": "string",
+            "description": "Recipient's address"
+          },
+          "city": {
+            "type": "string",
+            "description": "Recipient's city"
+          },
+          "postalCode": {
+            "type": "string",
+            "description": "Recipient's postal code"
+          },
+          "province": {
+            "type": "string",
+            "description": "Recipient's province/state"
+          }
+        }
+      },
+      "TransactionResponse": {
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "Unique identifier for the transaction"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User ID who initiated the transaction"
+          },
+          "sourceAmount": {
+            "type": "number",
+            "format": "double",
+            "description": "Amount in source currency"
+          },
+          "destinationAmount": {
+            "type": "number",
+            "format": "double",
+            "description": "Amount in destination currency"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "format": "double",
+            "description": "Exchange rate used for conversion"
+          },
+          "sourceCurrency": {
+            "type": "string",
+            "description": "Source currency code"
+          },
+          "destinationCurrency": {
+            "type": "string",
+            "description": "Destination currency code"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["INITIATED", "FUNDED", "CONVERTED", "PROCESSING", "COMPLETED", "FAILED"],
+            "description": "Current status of the transaction"
+          },
+          "recipientDetails": {
+            "$ref": "#/components/schemas/RecipientDetails"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Transaction creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          },
+          "estimatedCompletionTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Estimated completion time"
+          },
+          "fee": {
+            "type": "number",
+            "format": "double",
+            "description": "Total fee charged for the transaction"
+          },
+          "failureReason": {
+            "type": "string",
+            "description": "Reason for failure if status is FAILED"
+          }
+        }
+      },
+      "PaymentInstructionsResponse": {
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "ID of the transaction"
+          },
+          "paymentId": {
+            "type": "string",
+            "description": "ID of the payment"
+          },
+          "upiId": {
+            "type": "string",
+            "description": "UPI ID to receive payment"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "description": "Payment amount"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Payment currency"
+          },
+          "referenceNumber": {
+            "type": "string",
+            "description": "Reference number to include with payment"
+          },
+          "deepLink": {
+            "type": "string",
+            "description": "Deep link to UPI app to process payment"
+          },
+          "qrCode": {
+            "type": "string",
+            "description": "QR code for payment (base64 encoded)"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Expiration time for payment instructions"
+          }
+        }
+      },
+      "ExchangeRateResponse": {
+        "type": "object",
+        "properties": {
+          "sourceCurrency": {
+            "type": "string",
+            "description": "Source currency code"
+          },
+          "destinationCurrency": {
+            "type": "string",
+            "description": "Destination currency code"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double",
+            "description": "Exchange rate value"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when rate was fetched"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Exchange rate provider (bank name)"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Rate validity period"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when error occurred"
+          },
+          "path": {
+            "type": "string",
+            "description": "Request path"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            },
+            "description": "Additional error details"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "ServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearer-token": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Authorization header using the Bearer scheme. Example: 'Authorization: Bearer {token}'"
+      }
+    }
+  }
+} 
