@@ -1,0 +1,595 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Remit API",
+    "description": "API for cross-border remittance service between India and Canada",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support",
+      "url": "https://remit.example.com/support",
+      "email": "support@remit.example.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000/api",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/remittances": {
+      "post": {
+        "summary": "Initiate a new remittance",
+        "description": "Creates a new remittance transaction from India to Canada",
+        "operationId": "createRemittance",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemittanceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Remittance initiated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Remittance"]
+      }
+    },
+    "/remittances/{id}": {
+      "get": {
+        "summary": "Get a remittance transaction",
+        "description": "Returns a remittance transaction by ID",
+        "operationId": "getRemittance",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Transaction ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transaction not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Remittance"]
+      }
+    },
+    "/remittances/sender/{sender_id}": {
+      "get": {
+        "summary": "Get remittances by sender",
+        "description": "Returns remittance transactions by sender ID",
+        "operationId": "getRemittancesBySender",
+        "parameters": [
+          {
+            "name": "sender_id",
+            "in": "path",
+            "description": "Sender ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of transactions to return",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Transaction"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Remittance"]
+      }
+    },
+    "/remittances/recipient/{recipient_id}": {
+      "get": {
+        "summary": "Get remittances by recipient",
+        "description": "Returns remittance transactions by recipient ID",
+        "operationId": "getRemittancesByRecipient",
+        "parameters": [
+          {
+            "name": "recipient_id",
+            "in": "path",
+            "description": "Recipient ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of transactions to return",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Transaction"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Remittance"]
+      }
+    },
+    "/exchange-rates": {
+      "get": {
+        "summary": "Get exchange rate",
+        "description": "Returns the current exchange rate between two currencies",
+        "operationId": "getExchangeRate",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "description": "Source currency code (e.g., INR)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target",
+            "in": "query",
+            "description": "Target currency code (e.g., CAD)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeRate"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Exchange Rates"]
+      }
+    },
+    "/callbacks/payment": {
+      "post": {
+        "summary": "Payment callback",
+        "description": "Callback endpoint for UPI payment notifications",
+        "operationId": "paymentCallback",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentCallback"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Callback processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Callbacks"]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RemittanceRequest": {
+        "type": "object",
+        "required": [
+          "source_amount",
+          "source_currency",
+          "destination_currency",
+          "sender_id",
+          "recipient_id"
+        ],
+        "properties": {
+          "source_amount": {
+            "type": "number",
+            "format": "float",
+            "description": "Amount in source currency",
+            "example": 10000
+          },
+          "source_currency": {
+            "type": "string",
+            "description": "Source currency code",
+            "example": "INR"
+          },
+          "destination_currency": {
+            "type": "string",
+            "description": "Destination currency code",
+            "example": "CAD"
+          },
+          "sender_id": {
+            "type": "string",
+            "description": "ID of the sender",
+            "example": "user_123"
+          },
+          "recipient_id": {
+            "type": "string",
+            "description": "ID of the recipient",
+            "example": "user_456"
+          }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "transaction_id": {
+            "type": "string",
+            "description": "Unique transaction ID",
+            "example": "tx_123456789"
+          },
+          "status": {
+            "type": "string",
+            "description": "Transaction status",
+            "enum": [
+              "initiated",
+              "funds_collected",
+              "conversion_in_progress",
+              "conversion_completed",
+              "transmission_in_progress",
+              "completed",
+              "failed"
+            ],
+            "example": "initiated"
+          },
+          "source_amount": {
+            "type": "number",
+            "format": "float",
+            "description": "Amount in source currency",
+            "example": 10000
+          },
+          "source_currency": {
+            "type": "string",
+            "description": "Source currency code",
+            "example": "INR"
+          },
+          "destination_amount": {
+            "type": "number",
+            "format": "float",
+            "description": "Amount in destination currency",
+            "example": 160
+          },
+          "destination_currency": {
+            "type": "string",
+            "description": "Destination currency code",
+            "example": "CAD"
+          },
+          "exchange_rate": {
+            "type": "number",
+            "format": "float",
+            "description": "Exchange rate applied",
+            "example": 0.016
+          },
+          "fees": {
+            "type": "number",
+            "format": "float",
+            "description": "Fees charged",
+            "example": 50
+          },
+          "sender_id": {
+            "type": "string",
+            "description": "ID of the sender",
+            "example": "user_123"
+          },
+          "recipient_id": {
+            "type": "string",
+            "description": "ID of the recipient",
+            "example": "user_456"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2023-01-01T12:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp",
+            "example": "2023-01-01T12:05:00Z"
+          },
+          "completion_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Completion timestamp",
+            "example": "2023-01-01T13:00:00Z"
+          },
+          "error_message": {
+            "type": "string",
+            "description": "Error message if failed",
+            "example": "Payment failed: user_cancelled"
+          },
+          "error_code": {
+            "type": "string",
+            "description": "Error code if failed",
+            "example": "payment_failed"
+          },
+          "payment_link": {
+            "type": "string",
+            "description": "Payment link for UPI payment",
+            "example": "https://upi-provider.com/pay/123456789"
+          }
+        }
+      },
+      "ExchangeRate": {
+        "type": "object",
+        "properties": {
+          "source_currency": {
+            "type": "string",
+            "description": "Source currency code",
+            "example": "INR"
+          },
+          "target_currency": {
+            "type": "string",
+            "description": "Target currency code",
+            "example": "CAD"
+          },
+          "rate": {
+            "type": "number",
+            "format": "float",
+            "description": "Exchange rate",
+            "example": 0.016
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the rate",
+            "example": "2023-01-01T12:00:00Z"
+          }
+        }
+      },
+      "PaymentCallback": {
+        "type": "object",
+        "required": [
+          "transaction_id",
+          "payment_id",
+          "status"
+        ],
+        "properties": {
+          "transaction_id": {
+            "type": "string",
+            "description": "Transaction ID",
+            "example": "tx_123456789"
+          },
+          "payment_id": {
+            "type": "string",
+            "description": "Payment ID from UPI provider",
+            "example": "upi_123456789"
+          },
+          "status": {
+            "type": "string",
+            "description": "Payment status",
+            "enum": ["completed", "failed"],
+            "example": "completed"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Completion timestamp",
+            "example": "2023-01-01T12:05:00Z"
+          },
+          "failure_reason": {
+            "type": "string",
+            "description": "Reason for failure if status is failed",
+            "example": "user_cancelled"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "Error message",
+                "example": "Invalid parameters"
+              },
+              "details": {
+                "type": "string",
+                "description": "Detailed error information",
+                "example": "Source amount must be at least 500 INR"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Remittance",
+      "description": "Remittance operations"
+    },
+    {
+      "name": "Exchange Rates",
+      "description": "Exchange rate operations"
+    },
+    {
+      "name": "Callbacks",
+      "description": "Callback endpoints for external services"
+    }
+  ]
+} 
