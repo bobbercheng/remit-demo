@@ -1,0 +1,162 @@
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/remitdb
+    username: postgres
+    password: postgres
+    pool:
+      initial-size: 5
+      max-size: 20
+      max-idle-time: 30m
+  flyway:
+    url: jdbc:postgresql://localhost:5432/remitdb
+    user: postgres
+    password: postgres
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Application specific configurations
+remit:
+  # Integration partner configurations
+  integration:
+    # UPI Configuration for India fund collection
+    upi:
+      base-url: https://api.upi-provider.com
+      api-key: ${UPI_API_KEY:dummy-api-key}
+      callback-url: ${UPI_CALLBACK_URL:http://localhost:8080/api/v1/callbacks/upi}
+      timeout: 30s
+      
+    # AD Bank Configuration for currency conversion
+    adbank:
+      base-url: https://api.ad-bank.com
+      client-id: ${ADBANK_CLIENT_ID:dummy-client-id}
+      client-secret: ${ADBANK_CLIENT_SECRET:dummy-client-secret}
+      timeout: 45s
+      
+    # Wise Configuration for Canada fund transmission
+    wise:
+      base-url: https://api.wise.com
+      api-key: ${WISE_API_KEY:dummy-api-key}
+      profile-id: ${WISE_PROFILE_ID:dummy-profile-id}
+      webhook-url: ${WISE_WEBHOOK_URL:http://localhost:8080/api/v1/callbacks/wise}
+      timeout: 60s
+  
+  # Business rules
+  business:
+    # Minimum and maximum amounts for remittance in INR
+    min-amount-inr: 1000
+    max-amount-inr: 1000000
+    
+    # Supported countries
+    supported-source-countries:
+      - IND
+    supported-destination-countries:
+      - CAN
+      
+    # Retry configuration for external services
+    retry:
+      max-attempts: 3
+      initial-interval: 1000
+      multiplier: 2.0
+      
+# Resilience4j configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      upiService:
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: 5
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+      adbankService:
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: 5
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+      wiseService:
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: 5
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+  retry:
+    instances:
+      upiService:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+      adbankService:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+      wiseService:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.fintech.remit: DEBUG
+    org.springframework.r2dbc: INFO
+    
+# Actuator endpoints for monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      
+# Profiles specific configuration
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  flyway:
+    clean-disabled: false
+logging:
+  level:
+    com.fintech.remit: DEBUG
+    org.springframework.web: DEBUG
+    
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  r2dbc:
+    url: r2dbc:tc:postgresql:///remitdb?TC_IMAGE_TAG=14-alpine
+  flyway:
+    url: jdbc:tc:postgresql:14-alpine:///remitdb
+    
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  r2dbc:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USER}
+    password: ${DATABASE_PASSWORD}
+  flyway:
+    url: ${FLYWAY_URL}
+    user: ${FLYWAY_USER}
+    password: ${FLYWAY_PASSWORD}
+server:
+  port: ${PORT:8080}
+logging:
+  level:
+    root: INFO
+    com.fintech.remit: INFO 

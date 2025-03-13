@@ -1,0 +1,1000 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Remittance API",
+    "description": "API for managing cross-border remittances between India and Canada",
+    "version": "1.0.0",
+    "contact": {
+      "name": "FinTech Remit Team",
+      "email": "support@fintechremit.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local development server"
+    },
+    {
+      "url": "https://api.fintechremit.com",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "remittances",
+      "description": "Operations related to remittances"
+    },
+    {
+      "name": "exchange-rates",
+      "description": "Operations related to exchange rates"
+    },
+    {
+      "name": "callbacks",
+      "description": "Callback endpoints for external services"
+    }
+  ],
+  "paths": {
+    "/api/v1/remittances": {
+      "post": {
+        "tags": ["remittances"],
+        "summary": "Initiate a new remittance",
+        "description": "Creates a new remittance transaction from India to Canada",
+        "operationId": "initiateRemittance",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemittanceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Remittance initiated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemittanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "get": {
+        "tags": ["remittances"],
+        "summary": "List remittances",
+        "description": "Returns a paginated list of remittances for the authenticated user",
+        "operationId": "listRemittances",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by remittance status",
+            "schema": {
+              "type": "string",
+              "enum": ["INITIATED", "FUNDS_COLLECTED", "CONVERSION_COMPLETED", "TRANSMITTED", "COMPLETED", "FAILED"]
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "Filter by start date (ISO-8601 format)",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "Filter by end date (ISO-8601 format)",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number (0-based)",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of remittances",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemittancePageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/remittances/{id}": {
+      "get": {
+        "tags": ["remittances"],
+        "summary": "Get remittance details",
+        "description": "Returns detailed information about a specific remittance",
+        "operationId": "getRemittance",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Remittance ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Remittance details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemittanceDetailResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Remittance not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/remittances/{id}/cancel": {
+      "post": {
+        "tags": ["remittances"],
+        "summary": "Cancel a remittance",
+        "description": "Attempts to cancel a remittance that has not been fully processed",
+        "operationId": "cancelRemittance",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Remittance ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Remittance cancelled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemittanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cannot cancel remittance in current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Remittance not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/exchange-rates": {
+      "get": {
+        "tags": ["exchange-rates"],
+        "summary": "Get current exchange rates",
+        "description": "Returns the current exchange rate from INR to CAD",
+        "operationId": "getExchangeRates",
+        "responses": {
+          "200": {
+            "description": "Exchange rate information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeRateResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/callbacks/upi": {
+      "post": {
+        "tags": ["callbacks"],
+        "summary": "UPI payment callback",
+        "description": "Callback endpoint for UPI payment status updates",
+        "operationId": "upiCallback",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpiCallbackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Callback processed successfully"
+          },
+          "400": {
+            "description": "Invalid callback data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/callbacks/wise": {
+      "post": {
+        "tags": ["callbacks"],
+        "summary": "Wise transfer callback",
+        "description": "Callback endpoint for Wise transfer status updates",
+        "operationId": "wiseCallback",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WiseCallbackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Callback processed successfully"
+          },
+          "400": {
+            "description": "Invalid callback data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RemittanceRequest": {
+        "type": "object",
+        "required": ["sourceAmount", "purposeCode", "recipientDetails"],
+        "properties": {
+          "sourceAmount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Amount to remit in INR",
+            "example": 50000
+          },
+          "purposeCode": {
+            "type": "string",
+            "description": "Purpose code for the remittance as per regulatory requirements",
+            "example": "S0001"
+          },
+          "recipientDetails": {
+            "$ref": "#/components/schemas/RecipientDetailsRequest"
+          }
+        }
+      },
+      "RecipientDetailsRequest": {
+        "type": "object",
+        "required": ["recipientName", "bankName", "accountNumber", "routingNumber", "accountType"],
+        "properties": {
+          "recipientName": {
+            "type": "string",
+            "description": "Name of the recipient",
+            "example": "John Doe"
+          },
+          "bankName": {
+            "type": "string",
+            "description": "Name of the recipient's bank",
+            "example": "Royal Bank of Canada"
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "Recipient's account number",
+            "example": "12345678"
+          },
+          "routingNumber": {
+            "type": "string",
+            "description": "Canadian bank routing number",
+            "example": "021000021"
+          },
+          "accountType": {
+            "type": "string",
+            "enum": ["CHECKING", "SAVINGS"],
+            "description": "Type of bank account",
+            "example": "CHECKING"
+          },
+          "addressLine1": {
+            "type": "string",
+            "description": "First line of recipient's address",
+            "example": "123 Maple Street"
+          },
+          "addressLine2": {
+            "type": "string",
+            "description": "Second line of recipient's address",
+            "example": "Apt 4B"
+          },
+          "city": {
+            "type": "string",
+            "description": "Recipient's city",
+            "example": "Toronto"
+          },
+          "province": {
+            "type": "string",
+            "description": "Recipient's province",
+            "example": "Ontario"
+          },
+          "postalCode": {
+            "type": "string",
+            "description": "Recipient's postal code",
+            "example": "M5V 2N4"
+          }
+        }
+      },
+      "RemittanceResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the remittance",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "sourceAmount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Amount in INR",
+            "example": 50000
+          },
+          "status": {
+            "type": "string",
+            "enum": ["INITIATED", "FUNDS_COLLECTED", "CONVERSION_COMPLETED", "TRANSMITTED", "COMPLETED", "FAILED"],
+            "description": "Current status of the remittance",
+            "example": "INITIATED"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the remittance was created",
+            "example": "2023-05-20T14:30:00Z"
+          },
+          "paymentLink": {
+            "type": "string",
+            "description": "UPI payment link for fund collection",
+            "example": "upi://pay?pa=example@upi&pn=Remit&am=50000&cu=INR&tn=Remittance"
+          },
+          "qrCode": {
+            "type": "string",
+            "description": "Base64 encoded QR code for UPI payment",
+            "example": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+          },
+          "estimatedCompletionTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Estimated time when the remittance will be completed",
+            "example": "2023-05-21T14:30:00Z"
+          }
+        }
+      },
+      "RemittancePageResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RemittanceResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "description": "Current page number",
+            "example": 0
+          },
+          "size": {
+            "type": "integer",
+            "description": "Page size",
+            "example": 20
+          },
+          "totalElements": {
+            "type": "integer",
+            "description": "Total number of elements",
+            "example": 50
+          },
+          "totalPages": {
+            "type": "integer",
+            "description": "Total number of pages",
+            "example": 3
+          }
+        }
+      },
+      "RemittanceDetailResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the remittance",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "sourceAmount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Amount in INR",
+            "example": 50000
+          },
+          "destinationAmount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Amount in CAD",
+            "example": 800.25
+          },
+          "exchangeRate": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Exchange rate used for conversion",
+            "example": 0.016005
+          },
+          "status": {
+            "type": "string",
+            "enum": ["INITIATED", "FUNDS_COLLECTED", "CONVERSION_COMPLETED", "TRANSMITTED", "COMPLETED", "FAILED"],
+            "description": "Current status of the remittance",
+            "example": "FUNDS_COLLECTED"
+          },
+          "purposeCode": {
+            "type": "string",
+            "description": "Purpose code for the remittance",
+            "example": "S0001"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the remittance was created",
+            "example": "2023-05-20T14:30:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the remittance was last updated",
+            "example": "2023-05-20T15:30:00Z"
+          },
+          "estimatedCompletionTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Estimated time when the remittance will be completed",
+            "example": "2023-05-21T14:30:00Z"
+          },
+          "recipientDetails": {
+            "$ref": "#/components/schemas/RecipientDetailsResponse"
+          },
+          "paymentDetails": {
+            "$ref": "#/components/schemas/PaymentDetailsResponse"
+          },
+          "conversionDetails": {
+            "$ref": "#/components/schemas/ConversionDetailsResponse"
+          },
+          "transmissionDetails": {
+            "$ref": "#/components/schemas/TransmissionDetailsResponse"
+          },
+          "timeline": {
+            "type": "array",
+            "description": "Timeline of events for this remittance",
+            "items": {
+              "$ref": "#/components/schemas/TimelineEvent"
+            }
+          }
+        }
+      },
+      "RecipientDetailsResponse": {
+        "type": "object",
+        "properties": {
+          "recipientName": {
+            "type": "string",
+            "description": "Name of the recipient",
+            "example": "John Doe"
+          },
+          "bankName": {
+            "type": "string",
+            "description": "Name of the recipient's bank",
+            "example": "Royal Bank of Canada"
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "Masked account number",
+            "example": "****5678"
+          },
+          "routingNumber": {
+            "type": "string",
+            "description": "Canadian bank routing number",
+            "example": "021000021"
+          },
+          "accountType": {
+            "type": "string",
+            "enum": ["CHECKING", "SAVINGS"],
+            "description": "Type of bank account",
+            "example": "CHECKING"
+          },
+          "city": {
+            "type": "string",
+            "description": "Recipient's city",
+            "example": "Toronto"
+          },
+          "province": {
+            "type": "string",
+            "description": "Recipient's province",
+            "example": "Ontario"
+          }
+        }
+      },
+      "PaymentDetailsResponse": {
+        "type": "object",
+        "properties": {
+          "sourcePaymentMethod": {
+            "type": "string",
+            "description": "Payment method used",
+            "example": "UPI"
+          },
+          "paymentReference": {
+            "type": "string",
+            "description": "Payment reference number",
+            "example": "UPI123456789"
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": ["PENDING", "COMPLETED", "FAILED"],
+            "description": "Status of the payment",
+            "example": "COMPLETED"
+          },
+          "paymentTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the payment was processed",
+            "example": "2023-05-20T15:00:00Z"
+          }
+        }
+      },
+      "ConversionDetailsResponse": {
+        "type": "object",
+        "properties": {
+          "sourceCurrency": {
+            "type": "string",
+            "description": "Source currency",
+            "example": "INR"
+          },
+          "destinationCurrency": {
+            "type": "string",
+            "description": "Destination currency",
+            "example": "CAD"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Exchange rate used",
+            "example": 0.016005
+          },
+          "adbankReference": {
+            "type": "string",
+            "description": "AD Bank reference number",
+            "example": "ADB987654321"
+          },
+          "conversionStatus": {
+            "type": "string",
+            "enum": ["PENDING", "COMPLETED", "FAILED"],
+            "description": "Status of the conversion",
+            "example": "COMPLETED"
+          },
+          "conversionTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the conversion was processed",
+            "example": "2023-05-20T15:15:00Z"
+          }
+        }
+      },
+      "TransmissionDetailsResponse": {
+        "type": "object",
+        "properties": {
+          "wiseTransactionId": {
+            "type": "string",
+            "description": "Wise transaction ID",
+            "example": "WISE123456789"
+          },
+          "transmissionStatus": {
+            "type": "string",
+            "enum": ["PENDING", "COMPLETED", "FAILED"],
+            "description": "Status of the transmission",
+            "example": "PENDING"
+          },
+          "estimatedDelivery": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Estimated delivery time",
+            "example": "2023-05-21T14:30:00Z"
+          },
+          "actualDelivery": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Actual delivery time (if completed)",
+            "example": null
+          }
+        }
+      },
+      "TimelineEvent": {
+        "type": "object",
+        "properties": {
+          "eventType": {
+            "type": "string",
+            "description": "Type of event",
+            "example": "REMITTANCE_INITIATED"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the event",
+            "example": "Remittance initiated by user"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the event occurred",
+            "example": "2023-05-20T14:30:00Z"
+          }
+        }
+      },
+      "ExchangeRateResponse": {
+        "type": "object",
+        "properties": {
+          "sourceCurrency": {
+            "type": "string",
+            "description": "Source currency",
+            "example": "INR"
+          },
+          "destinationCurrency": {
+            "type": "string",
+            "description": "Destination currency",
+            "example": "CAD"
+          },
+          "rate": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Current exchange rate",
+            "example": 0.016005
+          },
+          "minAmount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Minimum amount that can be remitted in source currency",
+            "example": 1000
+          },
+          "maxAmount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Maximum amount that can be remitted in source currency",
+            "example": 1000000
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the rate was last updated",
+            "example": "2023-05-20T14:00:00Z"
+          }
+        }
+      },
+      "UpiCallbackRequest": {
+        "type": "object",
+        "required": ["remittanceId", "paymentReference", "status"],
+        "properties": {
+          "remittanceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Remittance ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "paymentReference": {
+            "type": "string",
+            "description": "UPI payment reference",
+            "example": "UPI123456789"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["COMPLETED", "FAILED"],
+            "description": "Payment status",
+            "example": "COMPLETED"
+          },
+          "amount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Amount collected",
+            "example": 50000
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the payment",
+            "example": "2023-05-20T15:00:00Z"
+          },
+          "errorCode": {
+            "type": "string",
+            "description": "Error code if payment failed",
+            "example": null
+          },
+          "errorMessage": {
+            "type": "string",
+            "description": "Error message if payment failed",
+            "example": null
+          }
+        }
+      },
+      "WiseCallbackRequest": {
+        "type": "object",
+        "required": ["transactionId", "status"],
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "Wise transaction ID",
+            "example": "WISE123456789"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["COMPLETED", "FAILED"],
+            "description": "Transfer status",
+            "example": "COMPLETED"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the status update",
+            "example": "2023-05-21T14:00:00Z"
+          },
+          "errorCode": {
+            "type": "string",
+            "description": "Error code if transfer failed",
+            "example": null
+          },
+          "errorMessage": {
+            "type": "string",
+            "description": "Error message if transfer failed",
+            "example": null
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the error occurred",
+            "example": "2023-05-20T14:30:00Z"
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "example": 400
+          },
+          "error": {
+            "type": "string",
+            "description": "Error type",
+            "example": "Bad Request"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Invalid remittance amount"
+          },
+          "path": {
+            "type": "string",
+            "description": "Request path",
+            "example": "/api/v1/remittances"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+} 
