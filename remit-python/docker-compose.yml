@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # API service
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=dev
+      - DYNAMODB_HOST=dynamodb
+      - DYNAMODB_PORT=8000
+      - DYNAMODB_REGION=us-east-1
+      - DYNAMODB_ACCESS_KEY=dummy
+      - DYNAMODB_SECRET_KEY=dummy
+    volumes:
+      - .:/app
+    depends_on:
+      - dynamodb
+    networks:
+      - remit-network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # DynamoDB Local
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    ports:
+      - "8001:8000"
+    command: -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data/
+    volumes:
+      - dynamodb-data:/home/dynamodblocal/data/
+    networks:
+      - remit-network
+
+  # DynamoDB Admin UI (optional)
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin:latest
+    ports:
+      - "8002:8001"
+    environment:
+      - DYNAMO_ENDPOINT=http://dynamodb:8000
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy
+    depends_on:
+      - dynamodb
+    networks:
+      - remit-network
+
+networks:
+  remit-network:
+    driver: bridge
+
+volumes:
+  dynamodb-data: 

@@ -1,0 +1,33 @@
+# Production-specific overrides
+[server]
+host = "0.0.0.0"
+port = 80
+log_level = "info"
+
+[database]
+# Use environment variables in production
+dynamodb_endpoint = ""  # Use AWS provided endpoint
+region = "${AWS_REGION}"
+access_key_id = "${AWS_ACCESS_KEY_ID}"
+secret_access_key = "${AWS_SECRET_ACCESS_KEY}"
+
+# Real endpoints for production
+[payment]
+upi_api_endpoint = "https://api.upi-gateway.prod.com"
+upi_callback_url = "https://remit-api.example.com/api/v1/webhooks/upi-callback"
+upi_api_key = "${UPI_API_KEY}"
+
+[currency]
+ad_bank_api_endpoint = "https://api.adbank.prod.com"
+ad_bank_api_key = "${AD_BANK_API_KEY}"
+ad_bank_client_id = "${AD_BANK_CLIENT_ID}"
+
+[transfer]
+wise_api_endpoint = "https://api.wise.com"
+wise_api_key = "${WISE_API_KEY}"
+wise_profile_id = "${WISE_PROFILE_ID}"
+wise_callback_url = "https://remit-api.example.com/api/v1/webhooks/wise-callback"
+
+[user_service]
+user_service_api_endpoint = "https://api.user-service.prod.com"
+user_service_api_key = "${USER_SERVICE_API_KEY}" 

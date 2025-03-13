@@ -1,0 +1,20 @@
+# Development-specific overrides
+[server]
+port = 3000
+log_level = "debug"
+
+[database]
+dynamodb_endpoint = "http://localhost:8000"
+
+# Use stub implementations for development
+[payment]
+upi_api_endpoint = "http://localhost:9001"  # Mock server for development
+
+[currency]
+ad_bank_api_endpoint = "http://localhost:9002"  # Mock server for development
+
+[transfer]
+wise_api_endpoint = "http://localhost:9003"  # Mock server for development
+
+[user_service]
+user_service_api_endpoint = "http://localhost:9004"  # Mock server for development 

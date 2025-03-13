@@ -1,0 +1,8 @@
+{
+    "DEBUG": true,
+    "DYNAMODB_HOST": "localhost",
+    "DYNAMODB_PORT": 8000,
+    "UPI_API_URL": "https://upi-mock.example.com/api",
+    "ADBANK_API_URL": "https://adbank-mock.example.com/api",
+    "WISE_API_URL": "https://api.sandbox.wise.com"
+} 

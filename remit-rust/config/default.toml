@@ -1,0 +1,52 @@
+# Server Configuration
+[server]
+host = "0.0.0.0"
+port = 8080
+workers = 4
+log_level = "info"
+
+# Database Configuration
+[database]
+dynamodb_endpoint = "http://localhost:8000"
+region = "us-east-1"
+access_key_id = "dummy"
+secret_access_key = "dummy"
+transactions_table = "remit_transactions"
+exchange_rates_table = "remit_exchange_rates"
+
+# Payment Gateway Configuration (UPI)
+[payment]
+upi_api_endpoint = "https://api.upi-gateway.example.com"
+upi_api_key = "dummy_upi_api_key"
+upi_callback_url = "http://localhost:8080/api/v1/webhooks/upi-callback"
+upi_timeout_seconds = 30
+
+# AD Bank Configuration for Currency Conversion
+[currency]
+ad_bank_api_endpoint = "https://api.adbank.example.com"
+ad_bank_api_key = "dummy_ad_bank_api_key"
+ad_bank_client_id = "dummy_ad_bank_client_id"
+ad_bank_timeout_seconds = 30
+
+# Wise Configuration for Cross-Border Transfer
+[transfer]
+wise_api_endpoint = "https://api.wise.com"
+wise_api_key = "dummy_wise_api_key"
+wise_profile_id = "dummy_wise_profile_id"
+wise_callback_url = "http://localhost:8080/api/v1/webhooks/wise-callback"
+wise_timeout_seconds = 60
+
+# User Service Configuration
+[user_service]
+user_service_api_endpoint = "https://api.user-service.example.com"
+user_service_api_key = "dummy_user_service_api_key"
+user_service_timeout_seconds = 10
+
+# Business Rules Configuration
+[business_rules]
+min_transaction_amount_inr = 1000
+max_transaction_amount_inr = 1000000
+fee_percentage = 0.5
+min_fee_inr = 100
+exchange_rate_cache_seconds = 300
+transaction_expiry_hours = 24 
