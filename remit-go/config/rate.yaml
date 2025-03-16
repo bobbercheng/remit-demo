@@ -1,0 +1,25 @@
+currency_pairs:
+  - source: "INR"
+    target: "CAD"
+    enabled: true
+    margin: 0.005  # 0.5% margin on exchange rate
+    min_rate_validity: 300s  # Rate valid for 5 minutes
+
+fees:
+  base:
+    type: "fixed"
+    amount: 100  # Base fee in INR
+  
+  percentage:
+    type: "variable"
+    rate: 0.007  # 0.7% of transaction amount
+    min: 50      # Minimum fee in INR
+    max: 5000    # Maximum fee in INR
+
+  wise:
+    type: "pass_through"  # Pass through Wise's fees to customer
+    margin: 0.001        # Additional 0.1% margin
+
+thresholds:
+  high_value: 500000     # Transactions above this amount need additional verification
+  suspicious: 1000000    # Transactions above this amount need manual review 

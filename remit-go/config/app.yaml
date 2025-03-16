@@ -1,0 +1,27 @@
+server:
+  port: 8080
+  timeout:
+    read: 5s
+    write: 10s
+    idle: 120s
+
+database:
+  dynamodb:
+    endpoint: "http://localhost:8000"  # Local DynamoDB endpoint
+    region: "us-west-2"
+    tables:
+      transaction: "remit_transactions"
+      payment: "remit_payments"
+
+logging:
+  level: "debug"
+  format: "json"
+
+limits:
+  min_amount: 100    # Minimum amount in INR
+  max_amount: 1000000 # Maximum amount in INR
+  daily_limit: 2000000 # Daily limit per user in INR
+
+monitoring:
+  health_check_interval: 30s
+  metrics_port: 9090 

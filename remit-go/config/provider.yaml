@@ -1,0 +1,31 @@
+upi:
+  provider: "razorpay"  # Example UPI provider
+  endpoint: "https://api.razorpay.com/v1"
+  timeout: 30s
+  retry:
+    max_attempts: 3
+    initial_interval: 1s
+    max_interval: 5s
+
+ad_bank:
+  endpoint: "https://api.adbank.example.com/v1"
+  timeout: 30s
+  rate_refresh_interval: 300s  # Refresh exchange rates every 5 minutes
+  retry:
+    max_attempts: 3
+    initial_interval: 1s
+    max_interval: 5s
+
+wise:
+  endpoint: "https://api.wise.com/v1"
+  timeout: 60s
+  profile_id: "your-profile-id"  # To be set via environment variable
+  retry:
+    max_attempts: 3
+    initial_interval: 2s
+    max_interval: 10s
+
+circuit_breaker:
+  threshold: 5          # Number of failures before opening
+  timeout: 60s         # Time before attempting to close
+  half_open_max: 2     # Max requests in half-open state 

@@ -1,0 +1,388 @@
+openapi: 3.0.0
+info:
+  title: Remit-Go API
+  description: API for cross-border remittance service between India and Canada
+  version: 1.0.0
+  contact:
+    name: Remit-Go Team
+    url: https://github.com/yourusername/remit-go
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: https://api.remit-go.com
+    description: Production server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        details:
+          type: object
+          description: Additional error details
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Transaction ID
+        userId:
+          type: string
+          description: User ID
+        status:
+          type: string
+          enum: [INITIATED, PAYMENT_PENDING, PAYMENT_COMPLETED, TRANSFER_INITIATED, COMPLETED, FAILED]
+        sourceAmount:
+          type: number
+          format: float
+          description: Amount in source currency (INR)
+        targetAmount:
+          type: number
+          format: float
+          description: Amount in target currency (CAD)
+        exchangeRate:
+          type: number
+          format: float
+          description: Exchange rate used for conversion
+        fees:
+          type: object
+          properties:
+            base:
+              type: number
+              format: float
+            variable:
+              type: number
+              format: float
+            total:
+              type: number
+              format: float
+        recipientDetails:
+          type: object
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+            bankCode:
+              type: string
+            accountNumber:
+              type: string
+        paymentDetails:
+          type: object
+          properties:
+            upiLink:
+              type: string
+            paymentId:
+              type: string
+            status:
+              type: string
+        transferDetails:
+          type: object
+          properties:
+            transferId:
+              type: string
+            status:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TransactionRequest:
+      type: object
+      required:
+        - sourceAmount
+        - recipientDetails
+      properties:
+        sourceAmount:
+          type: number
+          format: float
+          minimum: 100
+          maximum: 1000000
+        recipientDetails:
+          type: object
+          required:
+            - name
+            - email
+            - bankCode
+            - accountNumber
+          properties:
+            name:
+              type: string
+              minLength: 2
+              maxLength: 100
+            email:
+              type: string
+              format: email
+            bankCode:
+              type: string
+              pattern: '^[A-Z0-9]{3,9}$'
+            accountNumber:
+              type: string
+              minLength: 5
+              maxLength: 20
+
+    ExchangeRate:
+      type: object
+      properties:
+        sourceCurrency:
+          type: string
+          enum: [INR]
+        targetCurrency:
+          type: string
+          enum: [CAD]
+        rate:
+          type: number
+          format: float
+        timestamp:
+          type: string
+          format: date-time
+        validUntil:
+          type: string
+          format: date-time
+
+    PaymentCallback:
+      type: object
+      required:
+        - transactionId
+        - status
+      properties:
+        transactionId:
+          type: string
+        paymentId:
+          type: string
+        status:
+          type: string
+          enum: [SUCCESS, FAILED, PENDING]
+        amount:
+          type: number
+          format: float
+        timestamp:
+          type: string
+          format: date-time
+
+    TransferCallback:
+      type: object
+      required:
+        - transactionId
+        - status
+      properties:
+        transactionId:
+          type: string
+        transferId:
+          type: string
+        status:
+          type: string
+          enum: [COMPLETED, FAILED, PROCESSING]
+        amount:
+          type: number
+          format: float
+        timestamp:
+          type: string
+          format: date-time
+
+paths:
+  /api/v1/transactions:
+    post:
+      summary: Initiate a new remittance transaction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+      responses:
+        '201':
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '429':
+          description: Daily limit exceeded
+
+    get:
+      summary: List user transactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [INITIATED, PAYMENT_PENDING, PAYMENT_COMPLETED, TRANSFER_INITIATED, COMPLETED, FAILED]
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      pages:
+                        type: integer
+                      current:
+                        type: integer
+                      limit:
+                        type: integer
+        '401':
+          description: Unauthorized
+
+  /api/v1/transactions/{id}:
+    get:
+      summary: Get transaction details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Transaction not found
+
+  /api/v1/transactions/{id}/payment:
+    post:
+      summary: Generate UPI payment link
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment link generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  upiLink:
+                    type: string
+                  validUntil:
+                    type: string
+                    format: date-time
+        '401':
+          description: Unauthorized
+        '404':
+          description: Transaction not found
+        '409':
+          description: Payment already processed
+
+  /api/v1/exchange-rate:
+    get:
+      summary: Get current exchange rate
+      parameters:
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [INR]
+            default: INR
+        - name: target
+          in: query
+          schema:
+            type: string
+            enum: [CAD]
+            default: CAD
+      responses:
+        '200':
+          description: Current exchange rate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeRate'
+
+  /api/v1/callbacks/payment:
+    post:
+      summary: Payment status callback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCallback'
+      responses:
+        '200':
+          description: Callback processed successfully
+        '400':
+          description: Invalid callback data
+
+  /api/v1/callbacks/transfer:
+    post:
+      summary: Transfer status callback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferCallback'
+      responses:
+        '200':
+          description: Callback processed successfully
+        '400':
+          description: Invalid callback data 

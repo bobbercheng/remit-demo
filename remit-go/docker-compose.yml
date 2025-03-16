@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    container_name: remit-dynamodb
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb"
+    environment:
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy
+      - AWS_REGION=us-west-2
+    volumes:
+      - dynamodb-data:/home/dynamodblocal/data
+
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin
+    container_name: remit-dynamodb-admin
+    ports:
+      - "8001:8001"
+    environment:
+      - DYNAMO_ENDPOINT=http://dynamodb:8000
+      - AWS_REGION=us-west-2
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy
+    depends_on:
+      - dynamodb
+
+volumes:
+  dynamodb-data: 
